@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Random rand = new Random();
     private Boolean showingSequence = false;
+    private Boolean blinkingButton = false;
     private Boolean waitingPlayer = false;
     private List<Integer> colorSequence = new ArrayList<Integer>();
     private Integer difficulty = 1;
@@ -49,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             Integer color = currentColor;
             setButtonAlpha(color, 255);
-            showingSequence = false;
+            blinkingButton = false;
 
         }
     };
@@ -106,16 +107,11 @@ public class MainActivity extends AppCompatActivity {
                 if (showingSequence) return;
                 if (waitingPlayer) return;
 
-                colorSequence.clear();
-                int insertedColors = 0;
-
-                while (insertedColors < difficulty) {
-                    Integer color = rand.nextInt(4);
-                    colorSequence.add(color);
-                    insertedColors++;
-                }
+                Integer color = rand.nextInt(4);
+                colorSequence.add(color);
 
                 currentColorIndex = 0;
+                showingSequence = true;
                 handler.postDelayed(sequenceRunnable, 100);
 
 
@@ -133,29 +129,14 @@ public class MainActivity extends AppCompatActivity {
         redButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (showingSequence) return;
-                if (!waitingPlayer) return;
-                currentColor = RED;
-                showingSequence = true;
-                redButton.getBackground().setAlpha(100);
-                handler.postDelayed(colorRunnable, 250);
-                soundPool.play((int) soundPoolMap.get(RED), 1, 1, 1, 0, 1f);
-                pressColor(RED);
-
+                colorButtonClickEvent(RED);
             }
         });
 
         greenButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (showingSequence) return;
-                if (!waitingPlayer) return;
-                currentColor = GREEN;
-                showingSequence = true;
-                greenButton.getBackground().setAlpha(100);
-                handler.postDelayed(colorRunnable, 250);
-                soundPool.play((int) soundPoolMap.get(GREEN), 1, 1, 1, 0, 1f);
-                pressColor(GREEN);
+                colorButtonClickEvent(GREEN);
 
             }
         });
@@ -163,14 +144,7 @@ public class MainActivity extends AppCompatActivity {
         blueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (showingSequence) return;
-                if (!waitingPlayer) return;
-                currentColor = BLUE;
-                showingSequence = true;
-                blueButton.getBackground().setAlpha(100);
-                handler.postDelayed(colorRunnable, 250);
-                soundPool.play((int) soundPoolMap.get(BLUE), 1, 1, 1, 0, 1f);
-                pressColor(BLUE);
+                colorButtonClickEvent(BLUE);
 
             }
         });
@@ -178,18 +152,19 @@ public class MainActivity extends AppCompatActivity {
         yellowButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (showingSequence) return;
-                if (!waitingPlayer) return;
-                currentColor = YELLOW;
-                showingSequence = true;
-                yellowButton.getBackground().setAlpha(100);
-                handler.postDelayed(colorRunnable, 250);
-                soundPool.play((int) soundPoolMap.get(YELLOW), 1, 1, 1, 0, 1f);
-                pressColor(YELLOW);
-
+                colorButtonClickEvent(YELLOW);
             }
         });
 
+    }
+
+    public void addColorToSequence()
+    {
+        Integer color = rand.nextInt(4);
+        colorSequence.add(color);
+
+        currentColorIndex = 0;
+        handler.postDelayed(sequenceRunnable, 1000);
     }
 
     public void pressColor(Integer pressedColor)
@@ -204,6 +179,8 @@ public class MainActivity extends AppCompatActivity {
                 currentColorIndex = 0;
                 difficulty++;
                 score++;
+                showingSequence = true;
+                addColorToSequence();
                 scoreView.setText("Score: " + score.toString());
             }
         }
@@ -215,14 +192,38 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void colorButtonClickEvent(Integer color)
+    {
+        if (showingSequence) return;
+        if (!waitingPlayer) return;
+        currentColor = color;
+        blinkingButton = true;
+
+        if (color == RED) redButton.getBackground().setAlpha(100);
+        else if (color == GREEN) greenButton.getBackground().setAlpha(100);
+        else if (color == BLUE) blueButton.getBackground().setAlpha(100);
+        else yellowButton.getBackground().setAlpha(100);
+
+        handler.postDelayed(colorRunnable, 250);
+        soundPool.play((int) soundPoolMap.get(color), 1, 1, 1, 0, 1f);
+        pressColor(color);
+
+
+    }
+
     public void gameOver()
     {
         score = 0;
+        handler.removeCallbacks(colorRunnable);
+        handler.removeCallbacks(sequenceRunnable);
+        handler.removeCallbacks(sequence2Runnable);
+        for (int i = 0; i < 4; i++) setButtonAlpha(i, 255);
         difficulty = 1;
         showingSequence = false;
         waitingPlayer = false;
         currentColorIndex = 0;
         scoreView.setText("Score: 0");
+        colorSequence.clear();
 
     }
 
